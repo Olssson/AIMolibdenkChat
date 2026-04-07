@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useMemo, useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { loginRequest } from "../lib/api";
@@ -10,14 +10,32 @@ export default function LoginForm() {
 	const [email, setEmail] = useState<string>("");
 	const [password, setPassword] = useState<string>("");
 	const [showPassword, setShowPassword] = useState<boolean>(false);
+	const [step, setStep] = useState<1 | 2>(1);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string>("");
 	const splineSceneUrl =
-		"https://unpkg.com/@splinetool/viewer@1.12.74/build/spline-viewer.js" ||
-		"undefined";
+		"https://prod.spline.design/PEeua81IXcs20GAN/scene.splinecode";
 
 	const router = useRouter();
-	const formDisabled = loading || !email.trim() || !password;
+	const formDisabled = loading || (step === 1 ? !email.trim() : !password);
+
+	// Remove Spline Logo watermark dynamically
+	useEffect(() => {
+		const hideLogo = () => {
+			const viewer = document.querySelector("spline-viewer");
+			if (viewer && viewer.shadowRoot) {
+				const logo = viewer.shadowRoot.querySelector("#logo");
+				if (logo) {
+					logo.remove();
+				}
+			}
+		};
+
+		const intervalId = setInterval(hideLogo, 100);
+		setTimeout(() => clearInterval(intervalId), 8000);
+
+		return () => clearInterval(intervalId);
+	}, []);
 
 	const accentLabel = useMemo(() => {
 		if (loading) {
@@ -30,8 +48,17 @@ export default function LoginForm() {
 		event.preventDefault();
 		setError("");
 
-		if (!email.trim() || !password) {
-			setError("Wypełnij wszystkie pola.");
+		if (step === 1) {
+			if (!email.trim()) {
+				setError("Wpisz adres e-mail.");
+				return;
+			}
+			setStep(2);
+			return;
+		}
+
+		if (!password) {
+			setError("Podaj hasło.");
 			return;
 		}
 
@@ -66,7 +93,7 @@ export default function LoginForm() {
 			}}>
 			<Script
 				type='module'
-				src='https://unpkg.com/@splinetool/viewer@1.12.74/build/spline-viewer.js'
+				src='https://unpkg.com/@splinetool/viewer@1.12.77/build/spline-viewer.js'
 				strategy='afterInteractive'
 			/>
 
@@ -130,9 +157,11 @@ export default function LoginForm() {
 								placeholder='twoj@email.com'
 								autoComplete='email'
 								required
+								disabled={step === 2}
 							/>
 						</label>
 
+						{step === 2 && (
 						<label
 							style={{
 								display: "grid",
@@ -171,6 +200,7 @@ export default function LoginForm() {
 								</button>
 							</div>
 						</label>
+						)}
 
 						{error ? (
 							<div
@@ -197,9 +227,23 @@ export default function LoginForm() {
 									gap: "8px",
 								}}>
 								{loading ? <span className='spinner' /> : null}
-								{accentLabel}
+								{step === 1 ? "Dalej" : accentLabel}
 							</span>
 						</button>
+
+						{step === 2 && (
+							<button
+								type='button'
+								className='button-outline'
+								onClick={() => {
+									setStep(1);
+									setError("");
+								}}
+								disabled={loading}
+								style={{ marginTop: "-6px" }}>
+								Wróć
+							</button>
+						)}
 					</form>
 
 					<p
@@ -214,29 +258,14 @@ export default function LoginForm() {
 				</div>
 
 				<div
+					className='spline-outer'
 					style={{
 						background:
 							"linear-gradient(165deg, #eff6ff 0%, #ffffff 65%)",
 						minHeight: "500px",
 						position: "relative",
 					}}>
-					<div
-						style={{
-							position: "absolute",
-							top: "14px",
-							left: "14px",
-							right: "14px",
-							border: "1px dashed #bfdbfe",
-							borderRadius: "8px",
-							padding: "8px 10px",
-							color: "#1e40af",
-							fontSize: "12px",
-							zIndex: 2,
-							background: "rgba(255,255,255,0.75)",
-						}}>
-						Spline scene: {splineSceneUrl}
-					</div>
-					<div style={{ height: "100%" }}>
+					<div className='spline-inner' style={{ height: "100%", width: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}>
 						<spline-viewer url={splineSceneUrl}></spline-viewer>
 					</div>
 				</div>
@@ -251,6 +280,20 @@ export default function LoginForm() {
 					section > div:first-child {
 						border-right: none !important;
 						border-bottom: 1px solid var(--line);
+					}
+					
+					.spline-outer {
+						min-height: 350px !important;
+						display: flex;
+						justify-content: center;
+						align-items: center;
+						overflow: hidden;
+					}
+					
+					.spline-inner {
+						width: 100%;
+						display: flex;
+						justify-content: center;
 					}
 				}
 			`}</style>

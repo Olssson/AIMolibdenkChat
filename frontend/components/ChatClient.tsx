@@ -8,6 +8,7 @@ import {
 	type FormEvent,
 	type KeyboardEvent,
 } from "react";
+import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { chatRequest } from "../lib/api";
 import { clearSession, getSession } from "../lib/session";
@@ -143,6 +144,24 @@ export default function ChatClient() {
 		endRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
 	}, [messages, loading]);
 
+	// Remove Spline Logo watermark dynamically
+	useEffect(() => {
+		const hideLogo = () => {
+			const viewer = document.querySelector("spline-viewer");
+			if (viewer && viewer.shadowRoot) {
+				const logo = viewer.shadowRoot.querySelector("#logo");
+				if (logo) {
+					logo.remove();
+				}
+			}
+		};
+
+		const intervalId = setInterval(hideLogo, 100);
+		setTimeout(() => clearInterval(intervalId), 8000);
+
+		return () => clearInterval(intervalId);
+	}, []);
+
 	const canSend = useMemo(
 		() => text.trim().length > 0 && !loading,
 		[text, loading],
@@ -237,6 +256,11 @@ export default function ChatClient() {
 				flexDirection: "column",
 				minHeight: "100vh",
 			}}>
+			<Script
+				type='module'
+				src='https://unpkg.com/@splinetool/viewer@1.12.77/build/spline-viewer.js'
+				strategy='afterInteractive'
+			/>
 			<header
 				style={{
 					borderBottom: "1px solid var(--line)",
@@ -292,23 +316,33 @@ export default function ChatClient() {
 			</header>
 
 			{!hasMessages ? (
-				<section
-					style={{
-						flex: 1,
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-						padding: "20px 18px",
-						width: "100%",
+				<div 
+					className="empty-state-grid"
+					style={{ 
+						display: "grid", 
+						gridTemplateColumns: "1.2fr 1fr", 
+						flex: 1, 
+						maxWidth: "1150px", 
+						margin: "0 auto", 
+						width: "100%", 
+						alignItems: "center" 
 					}}>
-					<div
+					<section
 						style={{
-							width: "100%",
-							maxWidth: "600px",
 							display: "flex",
-							flexDirection: "column",
-							gap: "20px",
+							alignItems: "center",
+							justifyContent: "center",
+							padding: "20px 18px",
+							width: "100%",
 						}}>
+						<div
+							style={{
+								width: "100%",
+								maxWidth: "600px",
+								display: "flex",
+								flexDirection: "column",
+								gap: "20px",
+							}}>
 						<div style={{ textAlign: "center" }}>
 							<h2
 								style={{
@@ -387,7 +421,11 @@ export default function ChatClient() {
 							))}
 						</div>
 					</div>
-				</section>
+					</section>
+					<div className="spline-container" style={{ height: "550px", position: "relative" }}>
+						<spline-viewer url="https://prod.spline.design/PEeua81IXcs20GAN/scene.splinecode"></spline-viewer>
+					</div>
+				</div>
 			) : (
 				<section
 					style={{
@@ -478,6 +516,14 @@ export default function ChatClient() {
 				@media (max-width: 800px) {
 					section div[style*="grid-template-columns: 1fr 1fr"] {
 						grid-template-columns: 1fr !important;
+					}
+
+					.empty-state-grid {
+						grid-template-columns: 1fr !important;
+					}
+
+					.spline-container {
+						display: none;
 					}
 
 					form {

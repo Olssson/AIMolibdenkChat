@@ -9,3 +9,4 @@ replicate==1.0.4
 sentence-transformers==3.4.1
 langchain-huggingface==0.1.2
 gunicorn==23.0.0
+langchain-google-genai
