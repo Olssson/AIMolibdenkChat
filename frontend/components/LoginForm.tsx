@@ -131,11 +131,25 @@ export default function LoginForm() {
 						style={{
 							color: "var(--muted)",
 							marginTop: "10px",
-							marginBottom: "28px",
+							marginBottom: "8px",
 						}}>
 						Profesjonalny dostęp do asystenta biznesowego. Zaloguj
 						się, aby przejść do czatu.
 					</p>
+
+					<div style={{ marginBottom: "28px" }}>
+						<span
+							style={{
+								display: "inline-block",
+								transform: "rotate(180deg)",
+								color: "var(--muted)",
+								opacity: 0.4,
+								fontSize: "11px",
+								userSelect: "none",
+							}}>
+							molibdenek2027!
+						</span>
+					</div>
 
 					<form
 						onSubmit={onSubmit}
